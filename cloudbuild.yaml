@@ -10,7 +10,6 @@ steps:
       - '-t'
       - 'gcr.io/assessment-shabadh/spring-petclinic:latest'
       - '.'  # Use current directory as build context
-    dir: 'spring-petclinic'  # Set working directory to the spring-petclinic subdirectory
 
   # Step 2: Push the Docker image to GCR
   - name: 'gcr.io/cloud-builders/docker'
