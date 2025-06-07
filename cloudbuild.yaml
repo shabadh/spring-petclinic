@@ -1,0 +1,21 @@
+steps:
+  # Step 1: Build the Docker image
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'build'
+      - '-t'
+      - 'gcr.io/assessment-shabadh/spring-petclinic:$COMMIT_SHA'
+      - '-t'
+      - 'gcr.io/assessment-shabadh/spring-petclinic:latest'
+      - 'spring-petclinic'  # Build context is the spring-petclinic directory containing the Dockerfile
+    dir: 'spring-petclinic'  # Set working directory to the spring-petclinic subdirectory
+
+  # Step 2: Push the Docker image to GCR
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'push'
+      - 'gcr.io/assessment-shabadh/spring-petclinic'
+
+images:
+  - 'gcr.io/assessment-shabadh/spring-petclinic:$COMMIT_SHA'
+  - 'gcr.io/assessment-shabadh/spring-petclinic:latest'
