@@ -28,7 +28,7 @@ steps:
 
 # Deploy to gke-eu
 - name: 'gcr.io/cloud-builders/kubectl'
-  args: ['apply', '-f', 'kubernetes/serviceaccount.yaml', '-f', 'kubernetes/secret.yaml', '-f', 'kubernetes/deployment.yaml', '-f', 'kubernetes/services.yaml', '-f', 'kubernetes/serviceexport.yaml', '-f', 'kubernetes/namespace.yaml']
+  args: ['apply', '-f', 'kubernetes/namespace.yaml', '-f', 'kubernetes/serviceaccount.yaml', '-f', 'kubernetes/secret.yaml', '-f', 'kubernetes/deployment.yaml', '-f', 'kubernetes/services.yaml', '-f', 'kubernetes/serviceexport.yaml']
   env:
   - 'CLOUDSDK_COMPUTE_REGION=${_REGION_EU}'
   - 'CLOUDSDK_CONTAINER_CLUSTER=${_CLUSTER_EU}'
@@ -49,7 +49,7 @@ steps:
 
 # Deploy to gke-uk
 - name: 'gcr.io/cloud-builders/kubectl'
-  args: ['apply', '-f', 'kubernetes/serviceaccount.yaml', '-f', 'kubernetes/secret.yaml', '-f', 'kubernetes/deployment.yaml', '-f', 'kubernetes/services.yaml', '-f', 'kubernetes/serviceexport.yaml', '-f', 'kubernetes/namespace.yaml']
+  args: ['apply', '-f', 'kubernetes/namespace.yaml', '-f', 'kubernetes/serviceaccount.yaml', '-f', 'kubernetes/secret.yaml', '-f', 'kubernetes/deployment.yaml', '-f', 'kubernetes/services.yaml', '-f', 'kubernetes/serviceexport.yaml']
   env:
   - 'CLOUDSDK_COMPUTE_REGION=${_REGION_UK}'
   - 'CLOUDSDK_CONTAINER_CLUSTER=${_CLUSTER_UK}'
