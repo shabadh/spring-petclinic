@@ -12,6 +12,3 @@ spec:
     allowedRoutes:
       namespaces:
         from: Same
-  addresses:
-  - type: networking.gke.io/named-address-with-region
-    value: "regions/europe-west4/addresses/petclinic-ingress-ip"
