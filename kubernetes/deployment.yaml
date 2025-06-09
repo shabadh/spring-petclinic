@@ -1,0 +1,62 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: petclinic
+spec:
+  replicas: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: petclinic
+  template:
+    metadata:
+      labels:
+        app: petclinic
+    spec:
+      serviceAccountName: petclinic-sa
+      containers:
+        - name: petclinic
+          image: gcr.io/assessment-shabadh/petclinic:latest
+          ports:
+            - containerPort: 8080
+          env:
+            - name: MYSQL_URL
+              value: "jdbc:mysql://127.0.0.1:3306/petclinic"
+            - name: MYSQL_USER
+              valueFrom:
+                secretKeyRef:
+                  name: db-secrets
+                  key: username
+            - name: MYSQL_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: db-secrets
+                  key: password
+            - name: SPRING_SQL_INIT_MODE
+              value: always
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            timeoutSeconds: 2
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 8080
+            initialDelaySeconds: 15
+            periodSeconds: 10
+
+        - name: cloudsql-proxy
+          image: gcr.io/cloudsql-docker/gce-proxy:1.28.0
+          command:
+            - "/cloud_sql_proxy"
+            - "-instances=assessment-shabadh:europe-west4:petclinic-db-ha=tcp:3306"
+            - "iam-auth-only"
+          securityContext:
+            runAsNonRoot: true
