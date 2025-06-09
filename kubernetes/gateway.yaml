@@ -14,4 +14,4 @@ spec:
         from: Same
   addresses:
   - type: NamedAddress
-    value: petclinic-gateway-ip
+    value: petclinic-ingress-ip
