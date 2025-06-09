@@ -10,5 +10,4 @@ spec:
   rules:
   - backendRefs:
     - name: petclinic-service
-      kind: ServiceImport
       port: 80

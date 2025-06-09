@@ -13,5 +13,5 @@ spec:
       namespaces:
         from: Same
   addresses:
-  - type: IPAddress
-    value: "34.32.181.25"
+  - type: NamedAddress
+    value: petclinic-gateway-ip
