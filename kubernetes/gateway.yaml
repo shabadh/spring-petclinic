@@ -13,5 +13,5 @@ spec:
       namespaces:
         from: Same
   addresses:
-  - type: NamedAddress
-    value: petclinic-ingress-ip
+  - type: networking.gke.io/named-address-with-region
+    value: "regions/europe-west4/addresses/petclinic-ingress-ip"
