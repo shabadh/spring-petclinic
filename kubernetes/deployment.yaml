@@ -26,7 +26,7 @@ spec:
             - containerPort: 8080
           env:
             - name: MYSQL_URL
-              value: "jdbc:mysql://127.0.0.1:3306/petclinic"
+              value: "jdbc:mysql://127.0.0.1:3306/petclinic?useSSL=false"
             - name: MYSQL_USER
               valueFrom:
                 secretKeyRef:
@@ -39,19 +39,25 @@ spec:
                   key: password
             - name: SPRING_SQL_INIT_MODE
               value: always
+            - name: SPRING_PROFILES_ACTIVE
+              value: "mysql"
+            - name: SPRING_JPA_HIBERNATE_DDL_AUTO
+              value: "none"
+            - name: SPRING_JPA_SHOW_SQL
+              value: "true"
           readinessProbe:
             httpGet:
-              path: /
+              path: /actuator/health
               port: 8080
-            initialDelaySeconds: 10
-            periodSeconds: 5
-            timeoutSeconds: 2
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 3
           livenessProbe:
             httpGet:
-              path: /
+              path: /actuator/health
               port: 8080
-            initialDelaySeconds: 15
-            periodSeconds: 10
+            initialDelaySeconds: 60
+            periodSeconds: 30
 
         - name: cloudsql-proxy
           image: gcr.io/cloudsql-docker/gce-proxy:1.28.0
