@@ -84,7 +84,7 @@ substitutions:
   _DEPLOYMENT_NAME: 'petclinic' # Name of the deployment in both clusters
   _PROJECT_ID: 'assessment-shabadh'
   _IMAGE_NAME: 'petclinic'
-  _VERSION: 'v1-20250610165000'
+  _VERSION: 'v1-20250610'
 
 timeout: 300s # Total pipeline timeout
 options:
