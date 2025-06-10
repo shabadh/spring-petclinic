@@ -9,7 +9,8 @@ substitutions:
   _CLUSTER_EU: petclinic-dev-eu
   _REPO_NAME: gorilla_clinic
   _IMAGE_NAME: petclinic
-  _VERSION: v1-$(date +%Y%m%d%H%M%S)
+  _VERSION: v1-20250610
+  COMMIT_SHA: manual-commit
 
 steps:
 # Build Docker image
