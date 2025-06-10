@@ -59,7 +59,6 @@ spec:
             initialDelaySeconds: 60
             periodSeconds: 30
           securityContext:
-            runAsNonRoot: true
             allowPrivilegeEscalation: false
 
         - name: cloudsql-proxy
