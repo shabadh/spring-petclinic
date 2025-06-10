@@ -22,6 +22,7 @@ spec:
       containers:
         - name: petclinic
           image: gcr.io/assessment-shabadh/petclinic:latest
+          imagePullPolicy: Always
           ports:
             - containerPort: 8080
           env:

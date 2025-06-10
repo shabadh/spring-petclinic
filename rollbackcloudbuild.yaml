@@ -1,0 +1,61 @@
+steps:
+  # Step 1: Rollback deployment in the first cluster
+  - name: 'gcr.io/cloud-builders/kubectl'
+    id: rollback-cluster1
+    args:
+      - 'rollout'
+      - 'undo'
+      - 'deployment/${_DEPLOYMENT_NAME}'
+    env:
+      - 'CLOUDSDK_COMPUTE_REGION=${_REGION_EU}'
+      - 'CLOUDSDK_CONTAINER_CLUSTER=${_CLUSTER_NAME_1}'
+    waitFor: ['-'] # Start immediately
+
+  # Step 2: Verify rollback status in the first cluster
+  - name: 'gcr.io/cloud-builders/kubectl'
+    id: verify-rollback-cluster1
+    args:
+      - 'rollout'
+      - 'status'
+      - 'deployment/${_DEPLOYMENT_NAME}'
+      - '--timeout=60s' # Wait up to 60 seconds for rollback to stabilize
+    env:
+      - 'CLOUDSDK_COMPUTE_REGION=${_REGION_EU}'
+      - 'CLOUDSDK_CONTAINER_CLUSTER=${_CLUSTER_NAME_1}'
+    waitFor: ['rollback-cluster1'] # Run after rollback in cluster 1
+
+  # Step 3: Rollback deployment in the second cluster
+  - name: 'gcr.io/cloud-builders/kubectl'
+    id: rollback-cluster2
+    args:
+      - 'rollout'
+      - 'undo'
+      - 'deployment/${_DEPLOYMENT_NAME}'
+    env:
+      - 'CLOUDSDK_COMPUTE_REGION=${_REGION_UK}'
+      - 'CLOUDSDK_CONTAINER_CLUSTER=${_CLUSTER_NAME_2}'
+    waitFor: ['verify-rollback-cluster1'] # Run after verifying cluster 1 rollback
+
+  # Step 4: Verify rollback status in the second cluster
+  - name: 'gcr.io/cloud-builders/kubectl'
+    id: verify-rollback-cluster2
+    args:
+      - 'rollout'
+      - 'status'
+      - 'deployment/${_DEPLOYMENT_NAME}'
+      - '--timeout=60s' # Wait up to 60 seconds for rollback to stabilize
+    env:
+      - 'CLOUDSDK_COMPUTE_REGION=${_REGION_UK}'
+      - 'CLOUDSDK_CONTAINER_CLUSTER=${_CLUSTER_NAME_2}'
+    waitFor: ['rollback-cluster2'] # Run after rollback in cluster 2
+
+substitutions:
+  _REGION_EU: 'europe-west4' # Region of the first GKE cluster
+  _CLUSTER_NAME_1: 'petclinic-dev-eu' # Name of the first GKE cluster
+  _REGION_UK: 'europe-west2' # Region of the second GKE cluster
+  _CLUSTER_NAME_2: 'petclinic-dev-uk' # Name of the second GKE cluster
+  _DEPLOYMENT_NAME: 'petclinic' # Name of the deployment in both clusters
+
+timeout: 300s # Total pipeline timeout
+options:
+  logging: CLOUD_LOGGING_ONLY
