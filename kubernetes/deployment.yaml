@@ -58,6 +58,9 @@ spec:
               port: 8080
             initialDelaySeconds: 60
             periodSeconds: 30
+          securityContext:
+            runAsNonRoot: true
+            allowPrivilegeEscalation: false
 
         - name: cloudsql-proxy
           image: gcr.io/cloudsql-docker/gce-proxy:1.28.0
