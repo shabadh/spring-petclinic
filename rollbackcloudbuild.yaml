@@ -1,4 +1,15 @@
-steps:
+steps: 
+  - name: 'gcr.io/cloud-builders/gcloud'
+    id: auth-cluster1
+    args:
+      - 'container'
+      - 'clusters'
+      - 'get-credentials'
+      - '${_CLUSTER_NAME_1}'
+      - '--region=${_REGION_EU}'
+      - '--project=${_PROJECT_ID}'
+    waitFor: ['-'] # Start immediately
+
   # Step 1: Rollback deployment in the first cluster
   - name: 'gcr.io/cloud-builders/kubectl'
     id: rollback-cluster1
@@ -18,11 +29,22 @@ steps:
       - 'rollout'
       - 'status'
       - 'deployment/${_DEPLOYMENT_NAME}'
-      - '--timeout=60s' # Wait up to 60 seconds for rollback to stabilize
+      - '--timeout=120s' # Wait up to 60 seconds for rollback to stabilize
     env:
       - 'CLOUDSDK_COMPUTE_REGION=${_REGION_EU}'
       - 'CLOUDSDK_CONTAINER_CLUSTER=${_CLUSTER_NAME_1}'
     waitFor: ['rollback-cluster1'] # Run after rollback in cluster 1
+
+  - name: 'gcr.io/cloud-builders/gcloud'
+    id: auth-cluster2
+    args:
+      - 'container'
+      - 'clusters'
+      - 'get-credentials'
+      - '${_CLUSTER_NAME_2}'
+      - '--region=${_REGION_UK}'
+      - '--project=${_PROJECT_ID}'
+    waitFor: ['verify-rollback-cluster1'] # Run after verifying cluster 1
 
   # Step 3: Rollback deployment in the second cluster
   - name: 'gcr.io/cloud-builders/kubectl'
@@ -43,7 +65,7 @@ steps:
       - 'rollout'
       - 'status'
       - 'deployment/${_DEPLOYMENT_NAME}'
-      - '--timeout=60s' # Wait up to 60 seconds for rollback to stabilize
+      - '--timeout=120s' # Wait up to 60 seconds for rollback to stabilize
     env:
       - 'CLOUDSDK_COMPUTE_REGION=${_REGION_UK}'
       - 'CLOUDSDK_CONTAINER_CLUSTER=${_CLUSTER_NAME_2}'
@@ -55,6 +77,7 @@ substitutions:
   _REGION_UK: 'europe-west2' # Region of the second GKE cluster
   _CLUSTER_NAME_2: 'petclinic-dev-uk' # Name of the second GKE cluster
   _DEPLOYMENT_NAME: 'petclinic' # Name of the deployment in both clusters
+  _PROJECT_ID: 'assessment-shabadh'
 
 timeout: 300s # Total pipeline timeout
 options:
