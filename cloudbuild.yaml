@@ -3,7 +3,7 @@ options:
 
 substitutions:
   _PROJECT_ID: assessment-shabadh
-  _REGION_UK: europe-west2 
+  _REGION_UK: europe-west2
   _REGION_EU: europe-west4
   _CLUSTER_UK: petclinic-dev-uk
   _CLUSTER_EU: petclinic-dev-eu
@@ -11,94 +11,96 @@ substitutions:
   _IMAGE_NAME: petclinic
 
 steps:
+  # Step 0: Generate dynamic version
+  - name: 'gcr.io/cloud-builders/docker'
+    id: generate-version
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        VERSION="v1-$(date +%Y%m%d%H%M%S)"  # e.g., v1-20250610184700
+        echo "VERSION=$VERSION" >> version.env
+        echo "Generated version: $VERSION"
 
-# Version Dynamic
-- name: 'gcr.io/cloud-builders/docker'
-  id: generate-version
-  entrypoint: 'bash'
-  args:
-    - '-c'
-    - |
-      VERSION="v1-$(date +%Y%m%d%H%M%S)"
-      echo "VERSION=$VERSION" >> version.env
-      echo "Generated version: $VERSION"
+  # Step 1: Build Docker image with version and COMMIT_SHA tags
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['build', '-t', 'gcr.io/${_PROJECT_ID}/${_IMAGE_NAME}:${COMMIT_SHA}', '-t', 'gcr.io/${_PROJECT_ID}/${_IMAGE_NAME}:${VERSION}', '-t', 'gcr.io/${_PROJECT_ID}/${_IMAGE_NAME}:latest', '.']
+    id: build-image
+    env:
+      - 'VERSION=$(cat version.env | grep VERSION | cut -d= -f2)'
 
-# Build Docker image
-- name: 'gcr.io/cloud-builders/docker'
-  args: ['build', '-t', 'gcr.io/${_PROJECT_ID}/${_IMAGE_NAME}:${COMMIT_SHA}', '.']
-  id: build-image
+  # Step 2: Push image with COMMIT_SHA
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'gcr.io/${_PROJECT_ID}/${_IMAGE_NAME}:${COMMIT_SHA}']
+    id: push-image
+    env:
+      - 'VERSION=$(cat version.env | grep VERSION | cut -d= -f2)'
 
-# Push image with COMMIT_SHA
-- name: 'gcr.io/cloud-builders/docker'
-  args: ['push', 'gcr.io/${_PROJECT_ID}/${_IMAGE_NAME}:${COMMIT_SHA}']
-  id: push-image
-  
-# Tag image as latest
-- name: 'gcr.io/cloud-builders/docker'
-  args: ['tag', 'gcr.io/${_PROJECT_ID}/${_IMAGE_NAME}:${VERSION}', 'gcr.io/${_PROJECT_ID}/${_IMAGE_NAME}:latest']
-  id: tag-latest
+  # Step 3: Push image with dynamic version
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'gcr.io/${_PROJECT_ID}/${_IMAGE_NAME}:${VERSION}']
+    id: push-version
+    env:
+      - 'VERSION=$(cat version.env | grep VERSION | cut -d= -f2)'
 
-# Push latest tag to registry
-- name: 'gcr.io/cloud-builders/docker'
-  args: ['push', 'gcr.io/${_PROJECT_ID}/${_IMAGE_NAME}:latest']
-  id: push-latest
+  # Step 4: Push latest tag
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'gcr.io/${_PROJECT_ID}/${_IMAGE_NAME}:latest']
+    id: push-latest
+    env:
+      - 'VERSION=$(cat version.env | grep VERSION | cut -d= -f2)'
 
-# Tag image with version
-- name: 'gcr.io/cloud-builders/docker'
-  args: ['tag', 'gcr.io/${_PROJECT_ID}/${_IMAGE_NAME}:${COMMIT_SHA}', 'gcr.io/${_PROJECT_ID}/${_IMAGE_NAME}:${_VERSION}']
-  id: tag-version
+  # Step 5: Get credentials for gke-eu
+  - name: 'gcr.io/cloud-builders/gcloud'
+    args: ['container', 'clusters', 'get-credentials', '${_CLUSTER_EU}', '--region=${_REGION_EU}', '--project=${_PROJECT_ID}']
+    id: get-credentials-eu
 
-# Push version tag
-- name: 'gcr.io/cloud-builders/docker'
-  args: ['push', 'gcr.io/${_PROJECT_ID}/${_IMAGE_NAME}:${_VERSION}']
-  id: push-version
+  # Step 6: Deploy to gke-eu
+  - name: 'gcr.io/cloud-builders/kubectl'
+    args: ['apply', '-f', 'kubernetes/namespace.yaml', '-f', 'kubernetes/serviceaccount.yaml', '-f', 'kubernetes/secret.yaml', '-f', 'kubernetes/deployment.yaml', '-f', 'kubernetes/services.yaml', '-f', 'kubernetes/serviceexport.yaml']
+    env:
+      - 'CLOUDSDK_COMPUTE_REGION=${_REGION_EU}'
+      - 'CLOUDSDK_CONTAINER_CLUSTER=${_CLUSTER_EU}'
+    id: deploy-eu
 
-# Get credentials for gke-eu
-- name: 'gcr.io/cloud-builders/gcloud'
-  args: ['container', 'clusters', 'get-credentials', '${_CLUSTER_EU}', '--region=${_REGION_EU}', '--project=${_PROJECT_ID}']
-  id: get-credentials-eu
+  # Step 7: Update image in gke-eu with COMMIT_SHA (rollback can use VERSION)
+  - name: 'gcr.io/cloud-builders/kubectl'
+    args: ['set', 'image', 'deployment/petclinic', 'petclinic=gcr.io/${_PROJECT_ID}/${_IMAGE_NAME}:${COMMIT_SHA}', '--record']
+    env:
+      - 'CLOUDSDK_COMPUTE_REGION=${_REGION_EU}'
+      - 'CLOUDSDK_CONTAINER_CLUSTER=${_CLUSTER_EU}'
+    id: update-image-eu
 
-# Deploy to gke-eu
-- name: 'gcr.io/cloud-builders/kubectl'
-  args: ['apply', '-f', 'kubernetes/namespace.yaml', '-f', 'kubernetes/serviceaccount.yaml', '-f', 'kubernetes/secret.yaml', '-f', 'kubernetes/deployment.yaml', '-f', 'kubernetes/services.yaml', '-f', 'kubernetes/serviceexport.yaml']
-  env:
-  - 'CLOUDSDK_COMPUTE_REGION=${_REGION_EU}'
-  - 'CLOUDSDK_CONTAINER_CLUSTER=${_CLUSTER_EU}'
-  id: deploy-eu
+  # Step 8: Get credentials for gke-uk
+  - name: 'gcr.io/cloud-builders/gcloud'
+    args: ['container', 'clusters', 'get-credentials', '${_CLUSTER_UK}', '--region=${_REGION_UK}', '--project=${_PROJECT_ID}']
+    id: get-credentials-uk
 
-# Update image in gke-eu
-- name: 'gcr.io/cloud-builders/kubectl'
-  args: ['set', 'image', 'deployment/petclinic', 'petclinic=gcr.io/${_PROJECT_ID}/${_IMAGE_NAME}:${COMMIT_SHA}', '--record']
-  env:
-  - 'CLOUDSDK_COMPUTE_REGION=${_REGION_EU}'
-  - 'CLOUDSDK_CONTAINER_CLUSTER=${_CLUSTER_EU}'
-  id: update-image-eu
+  # Step 9: Deploy to gke-uk
+  - name: 'gcr.io/cloud-builders/kubectl'
+    args: ['apply', '-f', 'kubernetes/namespace.yaml', '-f', 'kubernetes/serviceaccount.yaml', '-f', 'kubernetes/secret.yaml', '-f', 'kubernetes/deployment.yaml', '-f', 'kubernetes/services.yaml', '-f', 'kubernetes/serviceexport.yaml']
+    env:
+      - 'CLOUDSDK_COMPUTE_REGION=${_REGION_UK}'
+      - 'CLOUDSDK_CONTAINER_CLUSTER=${_CLUSTER_UK}'
+    id: deploy-uk
 
-# Get credentials for gke-uk
-- name: 'gcr.io/cloud-builders/gcloud'
-  args: ['container', 'clusters', 'get-credentials', '${_CLUSTER_UK}', '--region=${_REGION_UK}', '--project=${_PROJECT_ID}']
-  id: get-credentials-uk
+  # Step 10: Update image in gke-uk with COMMIT_SHA (rollback can use VERSION)
+  - name: 'gcr.io/cloud-builders/kubectl'
+    args: ['set', 'image', 'deployment/petclinic', 'petclinic=gcr.io/${_PROJECT_ID}/${_IMAGE_NAME}:${COMMIT_SHA}', '--record']
+    env:
+      - 'CLOUDSDK_COMPUTE_REGION=${_REGION_UK}'
+      - 'CLOUDSDK_CONTAINER_CLUSTER=${_CLUSTER_UK}'
+    id: update-image-uk
 
-# Deploy to gke-uk
-- name: 'gcr.io/cloud-builders/kubectl'
-  args: ['apply', '-f', 'kubernetes/namespace.yaml', '-f', 'kubernetes/serviceaccount.yaml', '-f', 'kubernetes/secret.yaml', '-f', 'kubernetes/deployment.yaml', '-f', 'kubernetes/services.yaml', '-f', 'kubernetes/serviceexport.yaml']
-  env:
-  - 'CLOUDSDK_COMPUTE_REGION=${_REGION_UK}'
-  - 'CLOUDSDK_CONTAINER_CLUSTER=${_CLUSTER_UK}'
-  id: deploy-uk
+  # Step 11: Deploy Gateway and HTTPRoute (config cluster only)
+  - name: 'gcr.io/cloud-builders/kubectl'
+    args: ['apply', '-f', 'kubernetes/gateway.yaml', '-f', 'kubernetes/route.yaml']
+    env:
+      - 'CLOUDSDK_COMPUTE_REGION=${_REGION_EU}'
+      - 'CLOUDSDK_CONTAINER_CLUSTER=${_CLUSTER_EU}'
+    id: deploy-gateway
 
-# Update image in gke-uk
-- name: 'gcr.io/cloud-builders/kubectl'
-  args: ['set', 'image', 'deployment/petclinic', 'petclinic=gcr.io/${_PROJECT_ID}/${_IMAGE_NAME}:${COMMIT_SHA}', '--record']
-  env:
-  - 'CLOUDSDK_COMPUTE_REGION=${_REGION_UK}'
-  - 'CLOUDSDK_CONTAINER_CLUSTER=${_CLUSTER_UK}'
-  id: update-image-uk
-
-# Deploy Gateway and HTTPRoute (config cluster only)
-- name: 'gcr.io/cloud-builders/kubectl'
-  args: ['apply', '-f', 'kubernetes/gateway.yaml', '-f', 'kubernetes/route.yaml']
-  env:
-  - 'CLOUDSDK_COMPUTE_REGION=${_REGION_EU}'
-  - 'CLOUDSDK_CONTAINER_CLUSTER=${_CLUSTER_EU}'
-  id: deploy-gateway
+images:
+  - 'gcr.io/${_PROJECT_ID}/${_IMAGE_NAME}:${COMMIT_SHA}'
+  - 'gcr.io/${_PROJECT_ID}/${_IMAGE_NAME}:latest'
+  - 'gcr.io/${_PROJECT_ID}/${_IMAGE_NAME}:${VERSION}'  # Added to retain the versioned image
