@@ -19,9 +19,9 @@ steps:
   args:
     - '-c'
     - |
-      VERSION="v1-$(date +%Y%m%d%H%M%S)"
-      echo "VERSION=$VERSION" >> version.env
-      echo "Generated version: $VERSION"
+      RUNTIME_VERSION="v1-$(date +%Y%m%d%H%M%S)"
+      echo "RUNTIME_VERSION=$RUNTIME_VERSION" >> version.env
+      echo "Generated version: $RUNTIME_VERSION"
 
 # Build Docker image
 - name: 'gcr.io/cloud-builders/docker'
@@ -58,7 +58,7 @@ steps:
     - '-c'
     - |
       source version.env
-      docker tag gcr.io/${_PROJECT_ID}/${_IMAGE_NAME}:${COMMIT_SHA} gcr.io/${_PROJECT_ID}/${_IMAGE_NAME}:$VERSION
+      docker tag gcr.io/${_PROJECT_ID}/${_IMAGE_NAME}:${COMMIT_SHA} gcr.io/${_PROJECT_ID}/${_IMAGE_NAME}:$RUNTIME_VERSION
 
 # Push version tag
 - name: 'gcr.io/cloud-builders/docker'
@@ -69,7 +69,7 @@ steps:
     - '-c'
     - |
       source version.env
-      docker push gcr.io/${_PROJECT_ID}/${_IMAGE_NAME}:$VERSION
+      docker push gcr.io/${_PROJECT_ID}/${_IMAGE_NAME}:$RUNTIME_VERSION
 
 # Get credentials for gke-eu
 - name: 'gcr.io/cloud-builders/gcloud'
@@ -92,7 +92,7 @@ steps:
     - '-c'
     - |
       source version.env
-      kubectl set image deployment/petclinic petclinic=gcr.io/${_PROJECT_ID}/${_IMAGE_NAME}:$VERSION --record
+      kubectl set image deployment/petclinic petclinic=gcr.io/${_PROJECT_ID}/${_IMAGE_NAME}:$RUNTIME_VERSION --record
   env:
   - 'CLOUDSDK_COMPUTE_REGION=${_REGION_EU}'
   - 'CLOUDSDK_CONTAINER_CLUSTER=${_CLUSTER_EU}'
@@ -119,7 +119,7 @@ steps:
     - '-c'
     - |
       source version.env
-      kubectl set image deployment/petclinic petclinic=gcr.io/${_PROJECT_ID}/${_IMAGE_NAME}:$VERSION --record
+      kubectl set image deployment/petclinic petclinic=gcr.io/${_PROJECT_ID}/${_IMAGE_NAME}:$RUNTIME_VERSION --record
   env:
   - 'CLOUDSDK_COMPUTE_REGION=${_REGION_UK}'
   - 'CLOUDSDK_CONTAINER_CLUSTER=${_CLUSTER_UK}'
