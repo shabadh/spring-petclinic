@@ -10,19 +10,21 @@ steps:
       - '--project=${_PROJECT_ID}'
     waitFor: ['-'] # Start immediately
 
-  # Step 1: Rollback deployment in the first cluster
+  # Step 1: Rollback deployment in the EU cluster
   - name: 'gcr.io/cloud-builders/kubectl'
     id: rollback-cluster1
     args:
-      - 'rollout'
-      - 'undo'
+      - 'set'
+      - 'image'
       - 'deployment/${_DEPLOYMENT_NAME}'
+      - '${_DEPLOYMENT_NAME}=gcr.io/${_PROJECT_ID}/${_IMAGE_NAME}:${_VERSION}'
+      - '--record'
     env:
       - 'CLOUDSDK_COMPUTE_REGION=${_REGION_EU}'
       - 'CLOUDSDK_CONTAINER_CLUSTER=${_CLUSTER_NAME_1}'
-    waitFor: ['-'] # Start immediately
+    waitFor: ['auth-cluster1'] # Start immediately
 
-  # Step 2: Verify rollback status in the first cluster
+  # Step 2: Verify rollback status in the EU cluster
   - name: 'gcr.io/cloud-builders/kubectl'
     id: verify-rollback-cluster1
     args:
@@ -34,7 +36,8 @@ steps:
       - 'CLOUDSDK_COMPUTE_REGION=${_REGION_EU}'
       - 'CLOUDSDK_CONTAINER_CLUSTER=${_CLUSTER_NAME_1}'
     waitFor: ['rollback-cluster1'] # Run after rollback in cluster 1
-
+  
+  # Step 3: Authenticate with UK cluster
   - name: 'gcr.io/cloud-builders/gcloud'
     id: auth-cluster2
     args:
@@ -46,19 +49,21 @@ steps:
       - '--project=${_PROJECT_ID}'
     waitFor: ['verify-rollback-cluster1'] # Run after verifying cluster 1
 
-  # Step 3: Rollback deployment in the second cluster
+  # Step 4: Rollback deployment in the UK cluster
   - name: 'gcr.io/cloud-builders/kubectl'
     id: rollback-cluster2
     args:
-      - 'rollout'
-      - 'undo'
+      - 'set'
+      - 'image'
       - 'deployment/${_DEPLOYMENT_NAME}'
+      - '${_DEPLOYMENT_NAME}=gcr.io/${_PROJECT_ID}/${_IMAGE_NAME}:${_VERSION}'
+      - '--record'
     env:
       - 'CLOUDSDK_COMPUTE_REGION=${_REGION_UK}'
       - 'CLOUDSDK_CONTAINER_CLUSTER=${_CLUSTER_NAME_2}'
-    waitFor: ['verify-rollback-cluster1'] # Run after verifying cluster 1 rollback
+    waitFor: ['auth-cluster2'] # Run after verifying cluster 1 rollback
 
-  # Step 4: Verify rollback status in the second cluster
+  # Step 5: Verify rollback status in the UK cluster
   - name: 'gcr.io/cloud-builders/kubectl'
     id: verify-rollback-cluster2
     args:
@@ -78,6 +83,8 @@ substitutions:
   _CLUSTER_NAME_2: 'petclinic-dev-uk' # Name of the second GKE cluster
   _DEPLOYMENT_NAME: 'petclinic' # Name of the deployment in both clusters
   _PROJECT_ID: 'assessment-shabadh'
+  _IMAGE_NAME: 'petclinic'
+  _VERSION: 'v1-20250610165000'
 
 timeout: 300s # Total pipeline timeout
 options:
