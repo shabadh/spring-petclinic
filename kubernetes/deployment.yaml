@@ -63,10 +63,11 @@ spec:
             allowPrivilegeEscalation: false
 
         - name: cloudsql-proxy
-          image: gcr.io/cloud-sql-connectors/cloud-sql-proxy:2.8.0
+          image: gcr.io/cloud-sql-connectors/cloud-sql-proxy:2.14.1
           command:
             - "/cloud_sql_proxy"
             - "-instances=assessment-shabadh:europe-west4:petclinic-db-ha=tcp:3306"
-            - "-enable_iam_login"
+            - "--auto-iam-authn"
+            - "--structured-logs"
           securityContext:
             runAsNonRoot: true
