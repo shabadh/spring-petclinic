@@ -23,17 +23,11 @@ spec:
         - name: petclinic
           image: gcr.io/assessment-shabadh/petclinic:latest
           imagePullPolicy: Always
-          startupProbe:
-            httpGet:
-              path: /actuator/health
-              port: 8080
-            failureThreshold: 30
-            periodSeconds: 10
           ports:
             - containerPort: 8080
           env:
             - name: MYSQL_URL
-              value: "jdbc:mysql://127.0.0.1:3306/petclinic?cloudSqlInstance=assessment-shabadh:europe-west4:petclinic-db-ha&socketFactory=com.google.cloud.sql.mysql.SocketFactory&useSSL=false"
+              value: "jdbc:mysql://127.0.0.1:3306/petclinic?useSSL=false&allowPublicKeyRetrieval=true"
             - name: MYSQL_USER
               valueFrom:
                 secretKeyRef:
@@ -48,6 +42,12 @@ spec:
               value: "mysql"
             - name: SERVER_SSL_ENABLED
               value: "false"
+          startupProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8080
+            failureThreshold: 30
+            periodSeconds: 10
           readinessProbe:
             httpGet:
               path: /actuator/health
@@ -68,6 +68,7 @@ spec:
           command:
             - "/cloud_sql_proxy"
             - "-instances=assessment-shabadh:europe-west4:petclinic-db-ha=tcp:3306"
+            - "-ip_address_types=PRIVATE"
             - "-enable_iam_login"
           securityContext:
             runAsNonRoot: true
