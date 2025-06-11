@@ -23,6 +23,12 @@ spec:
         - name: petclinic
           image: gcr.io/assessment-shabadh/petclinic:latest
           imagePullPolicy: Always
+          startupProbe:
+            httpGet:
+            path: /actuator/health
+            port: 8080
+            failureThreshold: 30
+            periodSeconds: 10
           ports:
             - containerPort: 8080
           env:
