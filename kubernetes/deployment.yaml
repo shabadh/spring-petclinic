@@ -67,6 +67,6 @@ spec:
           command:
             - "/cloud_sql_proxy"
             - "-instances=assessment-shabadh:europe-west4:petclinic-db-ha=tcp:3306"
-            - "iam-auth-only"
+            - "-enable_iam_login"
           securityContext:
             runAsNonRoot: true
