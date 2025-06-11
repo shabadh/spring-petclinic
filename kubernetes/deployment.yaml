@@ -67,8 +67,7 @@ spec:
           image: gcr.io/cloud-sql-connectors/cloud-sql-proxy:1.28.0
           args:
             - "/cloud_sql_proxy"
-            - "assessment-shabadh:europe-west4:petclinic-db-ha"
-            - "--port=3306"
+            - "-instances=assessment-shabadh:europe-west4:petclinic-db-ha=tcp:3306"
             - "--auto-iam-authn"
             - "--structured-logs"
           securityContext:
