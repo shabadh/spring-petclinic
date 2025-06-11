@@ -33,7 +33,7 @@ spec:
             - containerPort: 8080
           env:
             - name: MYSQL_URL
-              value: "jdbc:mysql://127.0.0.1:3306/petclinic?useSSL=false"
+              value: "jdbc:mysql://127.0.0.1:3306/petclinic?cloudSqlInstance=assessment-shabadh:europe-west4:petclinic-db-ha&socketFactory=com.google.cloud.sql.mysql.SocketFactory&useSSL=false"
             - name: MYSQL_USER
               valueFrom:
                 secretKeyRef:
@@ -44,14 +44,8 @@ spec:
                 secretKeyRef:
                   name: db-secrets
                   key: password
-            - name: SPRING_SQL_INIT_MODE
-              value: always
             - name: SPRING_PROFILES_ACTIVE
               value: "mysql"
-            - name: SPRING_JPA_HIBERNATE_DDL_AUTO
-              value: "none"
-            - name: SPRING_JPA_SHOW_SQL
-              value: "true"
             - name: SERVER_SSL_ENABLED
               value: "false"
           readinessProbe:
@@ -69,7 +63,6 @@ spec:
             periodSeconds: 30
           securityContext:
             allowPrivilegeEscalation: false
-
         - name: cloudsql-proxy
           image: gcr.io/cloudsql-docker/gce-proxy:1.28.0
           command:
