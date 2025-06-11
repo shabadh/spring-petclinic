@@ -33,7 +33,7 @@ spec:
             - containerPort: 8080
           env:
             - name: MYSQL_URL
-              value: "jdbc:mysql://127.0.0.1:3306/petclinic?useSSL=true&requireSSL=true"
+              value: "jdbc:mysql://127.0.0.1:3306/petclinic?useSSL=false"
             - name: MYSQL_USER
               valueFrom:
                 secretKeyRef:
@@ -52,6 +52,8 @@ spec:
               value: "none"
             - name: SPRING_JPA_SHOW_SQL
               value: "true"
+            - name: SERVER_SSL_ENABLED
+              value: "false"
           readinessProbe:
             httpGet:
               path: /actuator/health
