@@ -64,7 +64,7 @@ spec:
       initContainers:
         - name: cloudsql-proxy
           restartPolicy: Always
-          image: gcr.io/cloud-sql-connectors/cloud-sql-proxy:2.14.1
+          image: gcr.io/cloud-sql-connectors/cloud-sql-proxy:1.28.0
           args:
             - "/cloud_sql_proxy"
             - "assessment-shabadh:europe-west4:petclinic-db-ha"
