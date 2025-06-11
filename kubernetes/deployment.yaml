@@ -66,7 +66,6 @@ spec:
           restartPolicy: Always
           image: gcr.io/cloud-sql-connectors/cloud-sql-proxy:2.14.1
           args:
-            - "/cloud_sql_proxy"
             - "-instances=assessment-shabadh:europe-west4:petclinic-db-ha=tcp:3306"
             - "--auto-iam-authn"
             - "--structured-logs"
