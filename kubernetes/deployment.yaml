@@ -67,8 +67,7 @@ spec:
           image: gcr.io/cloudsql-docker/gce-proxy:1.28.0
           command:
             - "/cloud_sql_proxy"
-            - "-instances=assessment-shabadh:europe-west4:petclinic-db-ha=tcp:3306"
-            - "-ip_address_types=PRIVATE"
-            - "-enable_iam_login"
+            - "--instances=assessment-shabadh:europe-west4:petclinic-db-ha=tcp:3306"
+            - "--auto-iam-authn"
           securityContext:
             runAsNonRoot: true
