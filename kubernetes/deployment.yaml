@@ -61,7 +61,6 @@ spec:
             periodSeconds: 30
           securityContext:
             allowPrivilegeEscalation: false
-      initContainers:
         - name: cloudsql-proxy
           restartPolicy: Always
           image: gcr.io/cloud-sql-connectors/cloud-sql-proxy:2.14.1
