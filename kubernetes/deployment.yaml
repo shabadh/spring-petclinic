@@ -62,10 +62,10 @@ spec:
           securityContext:
             allowPrivilegeEscalation: false
         - name: cloudsql-proxy
-          image: gcr.io/cloud-sql-connectors/cloud-sql-proxy:2.14.1
-          args:
+          image: gcr.io/cloudsql-docker/gce-proxy:1.28.0
+          command:
+            - "/cloud_sql_proxy"  # Ensure this matches the image's executable location
             - "-instances=assessment-shabadh:europe-west4:petclinic-db-ha=tcp:3306"
-            - "--auto-iam-authn"
-            - "--structured-logs"
+            - "iam-auth-only"
           securityContext:
             runAsNonRoot: true
