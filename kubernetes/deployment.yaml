@@ -27,7 +27,7 @@ spec:
             - containerPort: 8080
           env:
             - name: MYSQL_URL
-              value: "jdbc:mysql://127.0.0.1:3306/petclinic?useSSL=false"
+              value: "jdbc:mysql://127.0.0.1:3306/petclinic?useSSL=true&requireSSL=true"
             - name: MYSQL_USER
               valueFrom:
                 secretKeyRef:
